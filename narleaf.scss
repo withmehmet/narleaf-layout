@@ -1,0 +1,878 @@
+// Narleaf Layout System — v0.1.0 (Early Release)
+@use "sass:map";
+@use "sass:string";
+@use "sass:math";
+@use "sass:meta";
+@use "sass:list";
+
+// ---------------------------------------------
+// VERSION
+
+// Reflected into the compiled output banner (see OUTPUT BANNER below).
+// Bump this on release; not intended to be overridden via `with (...)`.
+$nar-version: "0.1.0" !default;
+
+// ---------------------------------------------
+// SETTINGS
+
+$namespace: "nar" !default;
+
+$nar-use-layer: false !default;
+$layer-namespace: "nar" !default;
+$layer-suffix: "core" !default;
+
+$nar-output-banner: true !default;
+
+// Selector mode
+// true  -> low specificity selectors with :where()
+// false -> standard selectors without :where()
+//
+// :where() usage
+// Enabled when `$nar-use-where: true`.
+// Applies to: grid child reset (grid > *), span, col-start, col-end,
+// and offset selectors — including all responsive variants.
+// Does NOT apply to: container, container-full, grid, gap-auto,
+// gap (gap-N, gi-N, gb-N) selectors, or :root. These are always
+// written as standard selectors regardless of this setting.
+$nar-use-where: true !default;
+
+// Optional output controls
+// Core classes are always generated:
+// container, container-full, grid, span, span auto, span responsive, pi-auto, gap-auto
+
+$nar-output-padding-inline-utilities: true !default;
+$nar-output-padding-inline-responsive: true !default;
+
+$nar-output-gap-utilities: true !default;
+$nar-output-gap-responsive: true !default;
+
+$nar-output-gap-axis-utilities: true !default;
+$nar-output-gap-axis-responsive: true !default;
+
+$nar-output-col-start-utilities: true !default;
+$nar-output-col-start-responsive: true !default;
+
+$nar-output-col-end-utilities: true !default;
+$nar-output-col-end-responsive: true !default;
+
+// Offset is a user-friendly alias for col-start (offset-N => grid-column-start: N + 1)
+$nar-output-offset-utilities: true !default;
+$nar-output-offset-responsive: true !default;
+
+// ---------------------------------------------
+// TOKENS
+
+$breakpoints: (
+  sm: 640px,
+  md: 768px,
+  lg: 1024px,
+  xl: 1280px
+) !default;
+
+$bp-steps: map.keys($breakpoints);
+
+$grid-columns: 12 !default;
+
+// Container max width
+$container-max: 1280px !default;
+
+// Container padding-inline auto values
+$container-padding-inline-auto: (
+  base: 16px,
+  sm: 24px,
+  md: 24px,
+  lg: 32px,
+  xl: 40px
+) !default;
+
+// Container padding-inline scale
+$container-padding-inline-scale: (
+  0: 0,
+  16: 16px,
+  24: 24px,
+  32: 32px,
+  40: 40px
+) !default;
+
+$container-padding-inline-steps: map.keys($container-padding-inline-scale);
+
+// Auto gap values
+$gap-auto-values: (
+  base: 16px,
+  sm: 16px,
+  md: 24px,
+  lg: 24px,
+  xl: 24px
+) !default;
+
+// Gap scale
+$gaps: (
+  0: 0,
+  8: 8px,
+  16: 16px,
+  24: 24px,
+  32: 32px,
+  40: 40px,
+  48: 48px
+) !default;
+
+$gap-steps: map.keys($gaps);
+
+// ---------------------------------------------
+// VALIDATION
+
+@if meta.type-of($grid-columns) != number {
+  @error "[Narleaf] Invalid `$grid-columns`: `#{$grid-columns}`. Use a positive unitless integer.";
+}
+
+@if not math.is-unitless($grid-columns) {
+  @error "[Narleaf] Invalid `$grid-columns`: `#{$grid-columns}`. Use a unitless number.";
+}
+
+@if $grid-columns != math.round($grid-columns) {
+  @error "[Narleaf] Invalid `$grid-columns`: `#{$grid-columns}`. Use an integer.";
+}
+
+@if $grid-columns <= 0 {
+  @error "[Narleaf] Invalid `$grid-columns`: `#{$grid-columns}`. Use a number greater than 0.";
+}
+
+@if $nar-use-where != true and $nar-use-where != false {
+  @error "[Narleaf] Invalid `$nar-use-where`: `#{$nar-use-where}`. Use true or false.";
+}
+
+// $namespace, $layer-namespace, and $layer-suffix all get joined
+// (via nar-join) and embedded directly into generated CSS: class
+// selectors (.#{$prefix}container), custom property names
+// (--#{$namespace}-container-max), and the @layer name
+// (@layer #{$layer-name}). All three need to be safe in every one of
+// those contexts: letters, digits, and hyphens only, not starting with
+// a digit. No spaces, no leading dot/hash, nothing that would produce
+// broken or invalid CSS.
+@mixin nar-validate-css-ident($value, $value-name) {
+  @if meta.type-of($value) != string {
+    @error "[Narleaf] Invalid `#{$value-name}`: `#{$value}`. Use a string, e.g. \"layout\".";
+  }
+
+  @if $value != "" {
+    $nar-ident-chars: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-";
+
+    @for $i from 1 through string.length($value) {
+      $nar-ident-char: string.slice($value, $i, $i);
+
+      @if not string.index($nar-ident-chars, $nar-ident-char) {
+        @error "[Narleaf] Invalid `#{$value-name}`: `#{$value}`. Only letters, digits, and hyphens are allowed — found `#{$nar-ident-char}`. Spaces and symbols like `.` or `#` are not permitted.";
+      }
+    }
+
+    $nar-ident-first-char: string.slice($value, 1, 1);
+
+    @if string.index("0123456789", $nar-ident-first-char) {
+      @error "[Narleaf] Invalid `#{$value-name}`: `#{$value}`. It can't start with a digit — that would produce an invalid CSS identifier.";
+    }
+  }
+}
+
+@include nar-validate-css-ident($namespace, "$namespace");
+@include nar-validate-css-ident($layer-namespace, "$layer-namespace");
+@include nar-validate-css-ident($layer-suffix, "$layer-suffix");
+
+// Validates that every value in a token scale map is a usable CSS length:
+// a number with a unit, or literal 0 (always valid in CSS without a
+// unit). Catches things like `$gaps: (8: test)` or unitless garbage
+// before they ever reach the output. $allow-zero exists because scale
+// maps like $gaps/$container-padding-inline-scale legitimately start at 0.
+@mixin nar-validate-numeric-map($map, $map-name, $allow-zero: true) {
+  @each $key, $value in $map {
+    @if meta.type-of($value) != number {
+      @error "[Narleaf] Invalid value for `#{$key}` in `#{$map-name}`: `#{$value}`. Use a number with a length unit, e.g. 16px.";
+    }
+
+    @if $value == 0 {
+      @if not $allow-zero {
+        @error "[Narleaf] Invalid value for `#{$key}` in `#{$map-name}`: `0`. Use a value greater than 0.";
+      }
+    } @else if math.is-unitless($value) {
+      @error "[Narleaf] Invalid value for `#{$key}` in `#{$map-name}`: `#{$value}`. Use a number with a length unit (e.g. 16px), or 0.";
+    } @else if $value < 0 {
+      @error "[Narleaf] Invalid value for `#{$key}` in `#{$map-name}`: `#{$value}`. Use a non-negative value.";
+    }
+  }
+}
+
+@include nar-validate-numeric-map($gaps, "$gaps");
+@include nar-validate-numeric-map($container-padding-inline-scale, "$container-padding-inline-scale");
+@include nar-validate-numeric-map($container-padding-inline-auto, "$container-padding-inline-auto");
+@include nar-validate-numeric-map($gap-auto-values, "$gap-auto-values");
+
+// $breakpoints: keys must be safe CSS identifiers — they get interpolated
+// directly into class names (span-{bp}-N), custom property names
+// (--{namespace}-container-pi-{bp}), and @media-adjacent selectors, so the
+// same rules as $namespace apply. Values must be a positive number with a
+// unit (e.g. 768px), and entries must be listed in strictly ascending
+// order — the responsive mixins rely on source order to build the
+// mobile-first cascade (@include nar-up loops over $bp-steps in map order).
+@each $bp, $value in $breakpoints {
+  @if $bp == "" {
+    @error "[Narleaf] Invalid breakpoint key in `$breakpoints`: empty string is not allowed. Use a CSS-identifier-safe name, e.g. \"sm\".";
+  }
+
+  @include nar-validate-css-ident($bp, "breakpoint key in $breakpoints");
+
+  @if meta.type-of($value) != number {
+    @error "[Narleaf] Invalid value for breakpoint `#{$bp}` in `$breakpoints`: `#{$value}`. Use a number with a length unit, e.g. 768px.";
+  }
+
+  @if math.is-unitless($value) {
+    @error "[Narleaf] Invalid value for breakpoint `#{$bp}` in `$breakpoints`: `#{$value}`. Breakpoint values need a unit (e.g. 768px), unitless numbers are not allowed.";
+  }
+
+  @if $value <= 0 {
+    @error "[Narleaf] Invalid value for breakpoint `#{$bp}` in `$breakpoints`: `#{$value}`. Use a value greater than 0.";
+  }
+}
+
+@if list.length($bp-steps) > 1 {
+  @for $i from 2 through list.length($bp-steps) {
+    $nar-prev-bp: list.nth($bp-steps, $i - 1);
+    $nar-curr-bp: list.nth($bp-steps, $i);
+
+    @if map.get($breakpoints, $nar-curr-bp) <= map.get($breakpoints, $nar-prev-bp) {
+      @error "[Narleaf] `$breakpoints` must be defined in strictly ascending order. `#{$nar-curr-bp}` (#{map.get($breakpoints, $nar-curr-bp)}) does not come after `#{$nar-prev-bp}` (#{map.get($breakpoints, $nar-prev-bp)}).";
+    }
+  }
+}
+
+// $container-max: must be a positive number with a unit, just like the
+// $breakpoints entries. Catches things like `$container-max: wide`,
+// `$container-max: 1280` (unitless), or `$container-max: -100px` before
+// they reach the generated --#{$namespace}-container-max custom property.
+@if meta.type-of($container-max) != number {
+  @error "[Narleaf] Invalid `$container-max`: `#{$container-max}`. Use a number with a length unit, e.g. 1280px.";
+}
+
+@if math.is-unitless($container-max) {
+  @error "[Narleaf] Invalid `$container-max`: `#{$container-max}`. Use a number with a length unit (e.g. 1280px), unitless numbers are not allowed.";
+}
+
+@if $container-max <= 0 {
+  @error "[Narleaf] Invalid `$container-max`: `#{$container-max}`. Use a value greater than 0.";
+}
+
+// Any map that's keyed by breakpoint name ($container-padding-inline-auto, $gap-auto-values)
+// must use exactly the same breakpoint keys as $breakpoints — no more, no
+// less — so renaming or adding/removing a breakpoint can't silently fall
+// out of sync between the maps. $extra-allowed-keys covers keys these maps
+// are expected to carry beyond the breakpoints themselves (e.g. `base`).
+@mixin nar-validate-bp-aligned-map($map, $map-name, $extra-allowed-keys: ()) {
+  @each $bp in $bp-steps {
+    @if not map.has-key($map, $bp) {
+      @error "[Narleaf] `#{$map-name}` is missing breakpoint key `#{$bp}`, which exists in `$breakpoints`. Add a `#{$bp}` entry to `#{$map-name}`.";
+    }
+  }
+
+  @each $key in map.keys($map) {
+    @if list.index($bp-steps, $key) == null and list.index($extra-allowed-keys, $key) == null {
+      @error "[Narleaf] `#{$map-name}` has key `#{$key}`, which does not exist in `$breakpoints`. Rename or remove it from `#{$map-name}`, or add a matching `#{$key}` entry to `$breakpoints`.";
+    }
+  }
+}
+
+@include nar-validate-bp-aligned-map(
+  $container-padding-inline-auto,
+  "$container-padding-inline-auto",
+  $extra-allowed-keys: (base,)
+);
+
+@include nar-validate-bp-aligned-map(
+  $gap-auto-values,
+  "$gap-auto-values",
+  $extra-allowed-keys: (base,)
+);
+
+// ---------------------------------------------
+// HELPERS
+
+@function nar-to-string($value) {
+  @if $value == null {
+    @return "";
+  }
+
+  @return "#{$value}";
+}
+
+@function nar-ends-with-dash($value) {
+  $value: nar-to-string($value);
+
+  @return string.length($value) > 0 and
+    string.slice($value, string.length($value), string.length($value)) == "-";
+}
+
+@function nar-prefix($ns) {
+  $ns: nar-to-string($ns);
+
+  @if $ns == "" {
+    @return "";
+  }
+
+  @if nar-ends-with-dash($ns) {
+    @return $ns;
+  }
+
+  @return "#{$ns}-";
+}
+
+@function nar-join($ns, $suffix) {
+  $ns: nar-to-string($ns);
+  $suffix: nar-to-string($suffix);
+
+  @if $ns == "" {
+    @return $suffix;
+  }
+
+  @if $suffix == "" {
+    @return $ns;
+  }
+
+  @if nar-ends-with-dash($ns) {
+    @return "#{$ns}#{$suffix}";
+  }
+
+  @return "#{$ns}-#{$suffix}";
+}
+
+@function nar-map-get-required($source, $key, $source-name: "map") {
+  @if not map.has-key($source, $key) {
+    @error "[Narleaf] Missing key `#{$key}` in `#{$source-name}`.";
+  }
+
+  @return map.get($source, $key);
+}
+
+@function nar-gap-token-value($step) {
+  @return nar-map-get-required($gaps, $step, "$gaps");
+}
+
+@function nar-container-padding-inline-auto-value($bp) {
+  @return nar-map-get-required($container-padding-inline-auto, $bp, "$container-padding-inline-auto");
+}
+
+@function nar-gap-auto-value($bp) {
+  @return nar-map-get-required($gap-auto-values, $bp, "$gap-auto-values");
+}
+
+@function nar-selector-mode() {
+  @if $nar-use-where == true {
+    @return "where";
+  }
+
+  @return "standard";
+}
+
+// ---------------------------------------------
+// MIXINS
+
+@mixin nar-layer-wrap($name) {
+  @if $nar-use-layer == true {
+    @layer #{$name} {
+      @content;
+    }
+  } @else if $nar-use-layer == false {
+    @content;
+  } @else {
+    @error "[Narleaf] Invalid `$nar-use-layer`: `#{$nar-use-layer}`. Use true or false.";
+  }
+}
+
+@mixin nar-up($bp) {
+  @if map.has-key($breakpoints, $bp) {
+    @media (min-width: #{map.get($breakpoints, $bp)}) {
+      @content;
+    }
+  } @else {
+    @error "[Narleaf] Unknown breakpoint `#{$bp}`.";
+  }
+}
+
+@mixin nar-container-selector($class-name) {
+  .#{$prefix}container.#{$prefix}#{$class-name},
+  .#{$prefix}container-full.#{$prefix}#{$class-name} {
+    @content;
+  }
+}
+
+@mixin nar-container-padding-inline-class($class-name, $value) {
+  @include nar-container-selector($class-name) {
+    --#{$container-padding-inline-var-name}: #{$value};
+  }
+}
+
+@mixin nar-gap-class($class-name, $value) {
+  .#{$prefix}grid.#{$prefix}#{$class-name} {
+    --#{$gap-var-name}: #{$value};
+  }
+}
+
+@mixin nar-gap-inline-class($class-name, $value) {
+  .#{$prefix}grid.#{$prefix}#{$class-name} {
+    --#{$gap-inline-var-name}: #{$value};
+  }
+}
+
+@mixin nar-gap-block-class($class-name, $value) {
+  .#{$prefix}grid.#{$prefix}#{$class-name} {
+    --#{$gap-block-var-name}: #{$value};
+  }
+}
+
+@mixin nar-grid-child-reset-selector {
+  @if $nar-use-where == true {
+    :where(.#{$prefix}grid > *) {
+      @content;
+    }
+  } @else {
+    .#{$prefix}grid > * {
+      @content;
+    }
+  }
+}
+
+@mixin nar-grid-child-selector($class-name) {
+  @if $nar-use-where == true {
+    :where(.#{$prefix}grid) > .#{$prefix}#{$class-name} {
+      @content;
+    }
+  } @else {
+    .#{$prefix}grid > .#{$prefix}#{$class-name} {
+      @content;
+    }
+  }
+}
+
+// ---------------------------------------------
+// RESOLVE
+
+$namespace-str: nar-to-string($namespace);
+$prefix: nar-prefix($namespace-str);
+
+$layer-namespace-str: nar-to-string($layer-namespace);
+$layer-suffix-str: nar-to-string($layer-suffix);
+$layer-name: nar-join($layer-namespace-str, $layer-suffix-str);
+
+$container-max-var-name: nar-join($namespace-str, "container-max");
+
+// NOTE: the string "container-pi" passed to nar-join is the literal
+// CSS custom property suffix (--#{$namespace}-container-pi) and is
+// intentionally left unchanged here — only the SCSS variable holding
+// it has been renamed for readability. Renaming the literal would
+// change generated CSS output, which is out of scope for this refactor.
+$container-padding-inline-var-name: nar-join($namespace-str, "container-pi");
+$container-padding-inline-auto-base-var-name: nar-join($namespace-str, "container-pi-base");
+
+// Breakpoint-keyed var name map. Built from $bp-steps so it follows
+// whatever breakpoint names are defined in $breakpoints — no hardcoded
+// sm/md/lg/xl here.
+$container-padding-inline-auto-var-names: ();
+@each $bp in $bp-steps {
+  $container-padding-inline-auto-var-names: map.merge(
+    $container-padding-inline-auto-var-names,
+    ($bp: nar-join($namespace-str, "container-pi-#{$bp}"))
+  );
+}
+
+$gap-var-name: nar-join($namespace-str, "gap");
+$gap-inline-var-name: nar-join($namespace-str, "gap-inline");
+$gap-block-var-name: nar-join($namespace-str, "gap-block");
+
+$gap-auto-base-var-name: nar-join($namespace-str, "gap-auto-base");
+
+// Same pattern for gap-auto var names.
+$gap-auto-var-names: ();
+@each $bp in $bp-steps {
+  $gap-auto-var-names: map.merge(
+    $gap-auto-var-names,
+    ($bp: nar-join($namespace-str, "gap-auto-#{$bp}"))
+  );
+}
+
+// ---------------------------------------------
+// OUTPUT BANNER
+
+@if $nar-output-banner == true {
+  /*! Narleaf Layout System v#{$nar-version} */
+  /*! columns: #{$grid-columns} */
+  /*! breakpoints: #{$bp-steps} */
+  /*! selectors: #{nar-selector-mode()} */
+  /*! core: container, container-full, grid, span, span auto, span responsive, pi-auto, gap-auto */
+
+  @if $nar-use-layer == true {
+    /*! layer: #{$layer-name} */
+  }
+
+  @if $nar-output-padding-inline-utilities == true {
+    /*! pi utilities */
+  }
+
+  @if $nar-output-padding-inline-responsive == true {
+    /*! pi responsive */
+  }
+
+  @if $nar-output-gap-utilities == true {
+    /*! gap utilities */
+  }
+
+  @if $nar-output-gap-responsive == true {
+    /*! gap responsive */
+  }
+
+  @if $nar-output-gap-axis-utilities == true {
+    /*! gap axis utilities */
+  }
+
+  @if $nar-output-gap-axis-responsive == true {
+    /*! gap axis responsive */
+  }
+
+  @if $nar-output-col-start-utilities == true {
+    /*! col-start utilities */
+  }
+
+  @if $nar-output-col-start-responsive == true {
+    /*! col-start responsive */
+  }
+
+  @if $nar-output-col-end-utilities == true {
+    /*! col-end utilities */
+  }
+
+  @if $nar-output-col-end-responsive == true {
+    /*! col-end responsive */
+  }
+
+  @if $nar-output-offset-utilities == true {
+    /*! offset utilities */
+  }
+
+  @if $nar-output-offset-responsive == true {
+    /*! offset responsive */
+  }
+} @else if $nar-output-banner != false {
+  @error "[Narleaf] Invalid `$nar-output-banner`: `#{$nar-output-banner}`. Use true or false.";
+}
+
+// ---------------------------------------------
+// CONTAINER BASE
+
+@mixin nar-container-base {
+  inline-size: 100%;
+  margin-inline: auto;
+  box-sizing: border-box;
+
+  --#{$container-padding-inline-var-name}: 0;
+
+  padding-inline: var(--#{$container-padding-inline-var-name});
+}
+
+// ---------------------------------------------
+// OUTPUT
+
+@include nar-layer-wrap($layer-name) {
+  :root {
+    --#{$container-max-var-name}: #{$container-max};
+
+    --#{$container-padding-inline-auto-base-var-name}: #{nar-map-get-required(
+        $container-padding-inline-auto,
+        base,
+        "$container-padding-inline-auto"
+      )};
+
+    @each $bp in $bp-steps {
+      --#{map.get($container-padding-inline-auto-var-names, $bp)}: #{nar-container-padding-inline-auto-value($bp)};
+    }
+
+    --#{$gap-auto-base-var-name}: #{nar-gap-auto-value(base)};
+
+    @each $bp in $bp-steps {
+      --#{map.get($gap-auto-var-names, $bp)}: #{nar-gap-auto-value($bp)};
+    }
+  }
+
+  // -------------------------------------------
+  // CONTAINER
+
+  .#{$prefix}container,
+  .#{$prefix}container-full {
+    @include nar-container-base;
+  }
+
+  .#{$prefix}container {
+    max-inline-size: var(--#{$container-max-var-name});
+  }
+
+  .#{$prefix}container-full {
+    max-inline-size: none;
+  }
+
+  // -------------------------------------------
+  // CONTAINER PADDING-INLINE AUTO
+  // Always generated
+
+  @include nar-container-selector("pi-auto") {
+    --#{$container-padding-inline-var-name}: var(--#{$container-padding-inline-auto-base-var-name});
+  }
+
+  @each $bp in $bp-steps {
+    @include nar-up($bp) {
+      @include nar-container-selector("pi-auto") {
+        --#{$container-padding-inline-var-name}: var(--#{map.get($container-padding-inline-auto-var-names, $bp)});
+      }
+    }
+  }
+
+  // -------------------------------------------
+  // CONTAINER PADDING-INLINE UTILITIES
+  // Optional
+
+  @if $nar-output-padding-inline-utilities == true {
+    @each $step in $container-padding-inline-steps {
+      @include nar-container-padding-inline-class(
+        "pi-#{$step}",
+        nar-map-get-required($container-padding-inline-scale, $step, "$container-padding-inline-scale")
+      );
+    }
+  } @else if $nar-output-padding-inline-utilities != false {
+    @error "[Narleaf] Invalid `$nar-output-padding-inline-utilities`: `#{$nar-output-padding-inline-utilities}`. Use true or false.";
+  }
+
+  @if $nar-output-padding-inline-responsive == true {
+    @each $bp in $bp-steps {
+      @include nar-up($bp) {
+        @each $step in $container-padding-inline-steps {
+          @include nar-container-padding-inline-class(
+            "pi-#{$bp}-#{$step}",
+            nar-map-get-required($container-padding-inline-scale, $step, "$container-padding-inline-scale")
+          );
+        }
+      }
+    }
+  } @else if $nar-output-padding-inline-responsive != false {
+    @error "[Narleaf] Invalid `$nar-output-padding-inline-responsive`: `#{$nar-output-padding-inline-responsive}`. Use true or false.";
+  }
+
+  // -------------------------------------------
+  // GRID
+
+  .#{$prefix}grid {
+    display: grid;
+    grid-template-columns: repeat(#{$grid-columns}, minmax(0, 1fr));
+
+    --#{$gap-var-name}: 0;
+    --#{$gap-inline-var-name}: var(--#{$gap-var-name});
+    --#{$gap-block-var-name}: var(--#{$gap-var-name});
+
+    column-gap: var(--#{$gap-inline-var-name});
+    row-gap: var(--#{$gap-block-var-name});
+  }
+
+  @include nar-grid-child-reset-selector {
+    min-inline-size: 0;
+  }
+
+  // -------------------------------------------
+  // GAP AUTO
+  // Always generated
+
+  .#{$prefix}grid.#{$prefix}gap-auto {
+    --#{$gap-var-name}: var(--#{$gap-auto-base-var-name});
+  }
+
+  @each $bp in $bp-steps {
+    @include nar-up($bp) {
+      .#{$prefix}grid.#{$prefix}gap-auto {
+        --#{$gap-var-name}: var(--#{map.get($gap-auto-var-names, $bp)});
+      }
+    }
+  }
+
+  // -------------------------------------------
+  // SPAN
+  // Always generated
+
+  @include nar-grid-child-selector("span-auto") {
+    grid-column: auto;
+  }
+
+  @for $i from 1 through $grid-columns {
+    @include nar-grid-child-selector("span-#{$i}") {
+      grid-column: span #{$i} / span #{$i};
+    }
+  }
+
+  @each $bp in $bp-steps {
+    @include nar-up($bp) {
+      @include nar-grid-child-selector("span-#{$bp}-auto") {
+        grid-column: auto;
+      }
+
+      @for $i from 1 through $grid-columns {
+        @include nar-grid-child-selector("span-#{$bp}-#{$i}") {
+          grid-column: span #{$i} / span #{$i};
+        }
+      }
+    }
+  }
+
+  // -------------------------------------------
+  // COL START
+  // Optional
+
+  @if $nar-output-col-start-utilities == true {
+    @for $i from 1 through ($grid-columns + 1) {
+      @include nar-grid-child-selector("col-start-#{$i}") {
+        grid-column-start: #{$i};
+      }
+    }
+  } @else if $nar-output-col-start-utilities != false {
+    @error "[Narleaf] Invalid `$nar-output-col-start-utilities`: `#{$nar-output-col-start-utilities}`. Use true or false.";
+  }
+
+  @if $nar-output-col-start-responsive == true {
+    @each $bp in $bp-steps {
+      @include nar-up($bp) {
+        @for $i from 1 through ($grid-columns + 1) {
+          @include nar-grid-child-selector("col-start-#{$bp}-#{$i}") {
+            grid-column-start: #{$i};
+          }
+        }
+      }
+    }
+  } @else if $nar-output-col-start-responsive != false {
+    @error "[Narleaf] Invalid `$nar-output-col-start-responsive`: `#{$nar-output-col-start-responsive}`. Use true or false.";
+  }
+
+  // -------------------------------------------
+  // COL END
+  // Optional
+
+  @if $nar-output-col-end-utilities == true {
+    @for $i from 1 through ($grid-columns + 1) {
+      @include nar-grid-child-selector("col-end-#{$i}") {
+        grid-column-end: #{$i};
+      }
+    }
+  } @else if $nar-output-col-end-utilities != false {
+    @error "[Narleaf] Invalid `$nar-output-col-end-utilities`: `#{$nar-output-col-end-utilities}`. Use true or false.";
+  }
+
+  @if $nar-output-col-end-responsive == true {
+    @each $bp in $bp-steps {
+      @include nar-up($bp) {
+        @for $i from 1 through ($grid-columns + 1) {
+          @include nar-grid-child-selector("col-end-#{$bp}-#{$i}") {
+            grid-column-end: #{$i};
+          }
+        }
+      }
+    }
+  } @else if $nar-output-col-end-responsive != false {
+    @error "[Narleaf] Invalid `$nar-output-col-end-responsive`: `#{$nar-output-col-end-responsive}`. Use true or false.";
+  }
+
+  // -------------------------------------------
+  // OFFSET
+  // Optional
+  // User-friendly alias for col-start: offset-N pushes the element N
+  // columns to the right by setting grid-column-start to N + 1. No new
+  // CSS variables or tokens — this only ever produces grid-column-start.
+  // offset-auto resets grid-column-start back to `auto`, letting the grid's
+  // normal auto-placement algorithm take over again — used to cancel an
+  // offset applied at a smaller breakpoint (e.g. offset-2 offset-lg-auto).
+
+  @if $nar-output-offset-utilities == true {
+    @include nar-grid-child-selector("offset-auto") {
+      grid-column-start: auto;
+    }
+
+    @for $i from 1 through ($grid-columns - 1) {
+      @include nar-grid-child-selector("offset-#{$i}") {
+        grid-column-start: #{$i + 1};
+      }
+    }
+  } @else if $nar-output-offset-utilities != false {
+    @error "[Narleaf] Invalid `$nar-output-offset-utilities`: `#{$nar-output-offset-utilities}`. Use true or false.";
+  }
+
+  @if $nar-output-offset-responsive == true {
+    @each $bp in $bp-steps {
+      @include nar-up($bp) {
+        @include nar-grid-child-selector("offset-#{$bp}-auto") {
+          grid-column-start: auto;
+        }
+
+        @for $i from 1 through ($grid-columns - 1) {
+          @include nar-grid-child-selector("offset-#{$bp}-#{$i}") {
+            grid-column-start: #{$i + 1};
+          }
+        }
+      }
+    }
+  } @else if $nar-output-offset-responsive != false {
+    @error "[Narleaf] Invalid `$nar-output-offset-responsive`: `#{$nar-output-offset-responsive}`. Use true or false.";
+  }
+
+  // -------------------------------------------
+  // GAP UTILITIES
+  // Optional
+
+  @if $nar-output-gap-utilities == true {
+    @each $gap in $gap-steps {
+      @include nar-gap-class("gap-#{$gap}", nar-gap-token-value($gap));
+    }
+  } @else if $nar-output-gap-utilities != false {
+    @error "[Narleaf] Invalid `$nar-output-gap-utilities`: `#{$nar-output-gap-utilities}`. Use true or false.";
+  }
+
+  @if $nar-output-gap-axis-utilities == true {
+    @each $gap in $gap-steps {
+      @include nar-gap-inline-class("gi-#{$gap}", nar-gap-token-value($gap));
+      @include nar-gap-block-class("gb-#{$gap}", nar-gap-token-value($gap));
+    }
+  } @else if $nar-output-gap-axis-utilities != false {
+    @error "[Narleaf] Invalid `$nar-output-gap-axis-utilities`: `#{$nar-output-gap-axis-utilities}`. Use true or false.";
+  }
+
+  @if $nar-output-gap-responsive == true {
+    @each $bp in $bp-steps {
+      @include nar-up($bp) {
+        @each $gap in $gap-steps {
+          @include nar-gap-class(
+            "gap-#{$bp}-#{$gap}",
+            nar-gap-token-value($gap)
+          );
+        }
+      }
+    }
+  } @else if $nar-output-gap-responsive != false {
+    @error "[Narleaf] Invalid `$nar-output-gap-responsive`: `#{$nar-output-gap-responsive}`. Use true or false.";
+  }
+
+  @if $nar-output-gap-axis-responsive == true {
+    @each $bp in $bp-steps {
+      @include nar-up($bp) {
+        @each $gap in $gap-steps {
+          @include nar-gap-inline-class(
+            "gi-#{$bp}-#{$gap}",
+            nar-gap-token-value($gap)
+          );
+
+          @include nar-gap-block-class(
+            "gb-#{$bp}-#{$gap}",
+            nar-gap-token-value($gap)
+          );
+        }
+      }
+    }
+  } @else if $nar-output-gap-axis-responsive != false {
+    @error "[Narleaf] Invalid `$nar-output-gap-axis-responsive`: `#{$nar-output-gap-axis-responsive}`. Use true or false.";
+  }
+}
