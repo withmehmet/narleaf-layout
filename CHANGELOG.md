@@ -19,5 +19,5 @@ Initial release.
 - Two ready-made compiled CSS variants: Minimal and Full
 - README, GETTING_STARTED, CONFIGURATION documentation
 
-[Unreleased]: https://github.com/withmehmet/narleaf/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/withmehmet/narleaf/releases/tag/v0.1.0
+[Unreleased]: https://github.com/withmehmet/narleaf-layout/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/withmehmet/narleaf-layout/releases/tag/v0.1.0
