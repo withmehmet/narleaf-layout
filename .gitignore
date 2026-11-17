@@ -1,0 +1,20 @@
+# Sass cache and source maps
+.sass-cache/
+*.css.map
+
+# Secrets (never commit these)
+.env
+.env.*
+!.env.example
+
+# Dependencies (in case npm is added later)
+node_modules/
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
