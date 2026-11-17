@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <title>Narleaf Layout</title>
+  <rect width="32" height="32" rx="7" fill="#0E0E0D"/>
+  <path d="M16 5c7 3.5 9.5 11 0 22C6.500 16 9 8.500 16 5z" fill="#BBD5FF"/>
+  <path d="M16 11v13" stroke="#0E0E0D" stroke-width="1.800" stroke-linecap="round"/>
+</svg>

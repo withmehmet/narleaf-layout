@@ -4,6 +4,8 @@
 
 > The project is in an early release stage. The public API is not yet considered stable; changes may occur between versions. It's recommended to follow the release notes before using this in production.
 
+**[Live demo & playground](https://withmehmet.github.io/narleaf-layout/)** · Examples: [Landing page](https://withmehmet.github.io/narleaf-layout/examples/landing.html) · [Blog](https://withmehmet.github.io/narleaf-layout/examples/blog.html) · [Dashboard](https://withmehmet.github.io/narleaf-layout/examples/dashboard.html)
+
 Narleaf is a minimal system built on top of SCSS, designed to solve only **layout** problems.
 
 It provides core layout needs — container, grid, span, gap, and offset — through utility classes that are fully configurable at compile time and generated automatically for responsive use.
@@ -167,6 +169,7 @@ This README is the full explanation of the concepts and design decisions. If you
 | [`GETTING_STARTED.md`](./GETTING_STARTED.md) | An example-heavy quick reference that only shows how to use the classes. |
 | [`CONFIGURATION.md`](./CONFIGURATION.md) | A copy-paste template of all compile-time settings with their real names and default values. |
 | [`CHANGELOG.md`](./CHANGELOG.md) | The record of changes between releases. |
+| [Live demo](https://withmehmet.github.io/narleaf-layout/) | An interactive playground and three example templates (landing page, blog, dashboard) built entirely with Narleaf classes. Open an example and press the **Layout** button to see which classes build each region. |
 
 ## Quick Start
 
