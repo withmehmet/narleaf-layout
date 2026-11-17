@@ -1,4 +1,4 @@
-# CONFIGURATION.md — Narleaf Configuration Template
+# CONFIGURATION.md — Narleaf Layout Configuration Template
 
 This file is a copy-paste template of every setting you can copy into `@use "narleaf" with (...)` and change. Each variable below matches, one-to-one, the real `$` name and real default value in the source SCSS.
 

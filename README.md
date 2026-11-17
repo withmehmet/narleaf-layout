@@ -1,4 +1,4 @@
-# Narleaf Layout System
+# Narleaf Layout
 
 **v0.1.0 — Early Release**
 

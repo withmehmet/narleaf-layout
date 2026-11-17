@@ -1,4 +1,4 @@
-// Narleaf Layout System — v0.1.0 (Early Release)
+// Narleaf Layout — v0.1.0 (Early Release)
 @use "sass:map";
 @use "sass:string";
 @use "sass:math";
@@ -499,7 +499,7 @@ $gap-auto-var-names: ();
 // OUTPUT BANNER
 
 @if $nar-output-banner == true {
-  /*! Narleaf Layout System v#{$nar-version} */
+  /*! Narleaf Layout v#{$nar-version} */
   /*! columns: #{$grid-columns} */
   /*! breakpoints: #{$bp-steps} */
   /*! selectors: #{nar-selector-mode()} */

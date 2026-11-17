@@ -1,4 +1,4 @@
-# Narleaf Getting Started
+# Narleaf Layout — Getting Started
 
 For the full explanation of the concepts and design decisions, see `README.md` — this document only covers "how to write it."
 
