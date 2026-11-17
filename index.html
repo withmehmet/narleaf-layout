@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Narleaf Layout System</title>
-<meta name="description" content="Narleaf: container, grid, span, gap and offset. A minimal, compile-time configurable SCSS layout system.">
+<title>Narleaf Layout</title>
+<meta name="description" content="Narleaf Layout: container, grid, span, gap and offset. A minimal, compile-time configurable SCSS layout system.">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- Fonts are self-hosted (fonts/, SIL OFL 1.1): no third-party requests. -->
+<link rel="preload" href="fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/GeistMono-Variable.woff2" as="font" type="font/woff2" crossorigin>
 
 <!-- The library itself. This page's layout is built entirely with it. -->
 <link rel="stylesheet" href="narleaf-full.css">
@@ -18,6 +18,21 @@
     Page chrome only: color, type, vertical rhythm, a little flex.
     Every container / grid / column decision on this page is a Narleaf class.
   */
+
+  @font-face {
+    font-family: "Geist";
+    src: url("fonts/Geist-Variable.woff2") format("woff2");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Geist Mono";
+    src: url("fonts/GeistMono-Variable.woff2") format("woff2");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  }
 
   :root {
     --bg:        #FAFAF7;
@@ -92,7 +107,7 @@
   .nav a { text-decoration: none; color: var(--text); }
   .nav a:hover { color: var(--ink); }
   .nav .nav-gh { color: var(--ink); font-weight: 500; }
-  @media (max-width: 639px) { .nav .nav-hide-sm { display: none; } }
+  @media (max-width: 759px) { .nav .nav-hide-sm { display: none; } }
 
   /* ---------- sections ---------- */
   .section { padding-block: 88px; border-top: 1px solid var(--line); }
@@ -303,7 +318,7 @@
 <!-- ============ HEADER ============ -->
 <header class="site-header">
   <div class="nar-container nar-pi-auto flex-between">
-    <a class="wordmark" href="#top">Narleaf</a>
+    <a class="wordmark" href="#top">Narleaf Layout</a>
     <nav class="nav" aria-label="Sections">
       <a class="nav-hide-sm" href="#start">Start</a>
       <a class="nav-hide-sm" href="#playground">Playground</a>
@@ -596,7 +611,7 @@
 
 <footer class="site-footer">
   <div class="nar-container nar-pi-auto flex-between" style="flex-wrap:wrap">
-    <span>Narleaf Layout System · v0.1.0 · MIT</span>
+    <span>Narleaf Layout · v0.1.0 · MIT</span>
     <a href="https://github.com/withmehmet/narleaf" target="_blank" rel="noopener">github.com/withmehmet/narleaf</a>
   </div>
 </footer>
